@@ -74,17 +74,49 @@ pipeline {
 
         stage('Terraform Format Check') {
             steps {
-                dir("${TF_DIR}") {
-                    sh 'terraform fmt -check -recursive'
-                }
+                 sh '''
+                    set -e
+                    echo "Checking Terraform formatting..."
+                    terraform fmt -check -recursive
+                    echo "Terraform formatting check passed."
+                '''
             }
         }
 
         stage('Terraform Validate') {
             steps {
-                dir("${TF_DIR}") {
-                    sh 'terraform validate'
-                }
+                sh '''
+                    set -e
+                    echo "Validating Terraform configuration..."
+                    terraform validate
+                    echo "Terraform validation passed."
+                '''
+            }
+        }
+
+        stage('TFLint Scan') {
+            steps {
+                sh '''
+                    set -e
+                    echo "Running TFLint..."
+                    tflint --init
+                    tflint --recursive
+                    echo "TFLint scan passed."
+                '''
+            }
+        }
+
+        stage('Checkov Security Scan') {
+            steps {
+                sh '''
+                    set -e
+                    echo "Running Checkov security scan..."
+                    checkov \
+                        -d . \
+                        --framework terraform \
+                        --quiet
+                    echo "Checkov security scan passed."
+                '''
             }
         }
 
